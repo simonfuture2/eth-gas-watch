@@ -28,19 +28,7 @@ etherscan_api_key = os.getenv('ETHERSCAN_API_KEY')
 # Create an instance of the Etherscan client for the mainnet API
 etherscan = Etherscan(etherscan_api_key)
 
-# Twitter API keys and access tokens
-#consumer_key = os.getenv('consumer-key')
-#consumer_secret = os.getenv('consumer-secret')
-#access_token = os.getenv('access-token')
-#access_token_secret = os.getenv('access-token-secret')
-
-# Authenticate with the Twitter API
-#auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-#auth.set_access_token(access_token, access_token_secret)
-#api = tweepy.API(auth)
-
-
-# Connect to the Ethereum network using Alchemy
+# Connect to Alchemy instance
 w3 = Web3(Web3.HTTPProvider(alchemy))
 
 
@@ -86,22 +74,11 @@ while True:
     print('Average gas price last 24h: ${:.2f}'.format(average_gas_price_usd))
 
 
-
-
-#Get Number of Transactions in the last 1h
-
- 
-
-
-
 # Construct the tweet text
     tweet_text = f"🔷 ETH price is ${eth_usd_price} ({eth_usd_24h_change:+.2f}% last 24h)\n🔥 Current Gas price: ${current_gas_price_usd:.2f} || Avg Gas Price last 24h: ${average_gas_price_usd:.2f}\n💳 <1h Transactions: num_transactions "
 
     print(tweet_text)
 
-# Send the tweet with the chart image attached
-    #api.update_status(status=tweet_text, media_ids=[media.media_id])
-    
 # Wait an hour before sending the next tweet
     time.sleep(3600)
 
