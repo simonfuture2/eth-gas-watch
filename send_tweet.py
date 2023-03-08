@@ -3,14 +3,12 @@
 
 import tweepy
 import time
-import json
-from collections import defaultdict
+from decimal import Decimal
 from datetime import datetime, timezone, timedelta
 from web3 import Web3
 import requests
 import matplotlib.pyplot as plt
 from etherscan import Etherscan
-import pytz
 from dotenv import load_dotenv
 import os
 
@@ -77,34 +75,55 @@ while True:
         average_gas_price_usd.append(total_gas_cost / 1e18)
 
     average_gas_price_usd = sum(average_gas_price_usd) / len(average_gas_price_usd)
-    print('Average gas price in USD for the last 24 hours: ${:.2f}'.format(average_gas_price_usd))
+    print('Average gas price last 24h: ${:.2f}'.format(average_gas_price_usd))
 
-    # Get current block number and timestamp
-    current_block = etherscan.get_block_number()
-    current_time = int(datetime.now().timestamp())
+    average_transaction_cost_usd = []
+    for i in range(24):
+        hour_ago = datetime.now(timezone.utc) - timedelta(hours=i+1)
+        start_time = int(hour_ago.timestamp())
+        end_time = int((hour_ago + timedelta(hours=1)).timestamp())
+        block = w3.eth.get_block('latest', full_transactions=True)
+        gas_prices = block['transactions']
+        gas_used = sum([tx['gas'] for tx in gas_prices])
+        gas_price = w3.fromWei(block['gasUsed'], 'ether') / w3.fromWei(block['gasLimit'], 'ether')
+        transaction_cost = gas_used * gas_price
+        average_transaction_cost_usd.append(transaction_cost * Decimal(str(eth_usd_price)))
 
-    # Initialize list to store gas prices
+    average_transaction_cost_usd = sum(average_transaction_cost_usd) / len(average_transaction_cost_usd)
+    print('Avg trans. cost last 24h: ${:.2f}'.format(average_transaction_cost_usd))
+
+
+
+
+# Get current block number and timestamp
+    current_block = w3.eth.blockNumber
+    current_time = datetime.now()
+
+# Initialize list to store gas prices
     gas_prices_usd = []
 
-    # Loop over previous 6 hours
+# Loop over previous 6 hours
     for i in range(1, 7):
     # Calculate block number and timestamp for i hours ago
         block_number = current_block - i * 240  # Assuming 4 blocks are mined every minute
-        block_time = current_time - i * 3600  # 1 hour = 3600 seconds
+        block_time = current_time - timedelta(hours=i)
 
     # Get gas price of block
-    block = etherscan.get_block_by_number(block_number)
-    gas_used = sum([tx['gasUsed'] for tx in block['transactions']])
-    gas_limit = block['gasLimit']
-    gas_price = gas_used / gas_limit
+        block = w3.eth.get_block(block_number)
+        gas_used = sum([w3.eth.getTransaction(tx_hash)['gas'] for tx_hash in block.transactions])
+        gas_limit = block.gasLimit
+        gas_price = gas_used / gas_limit
 
-    # Convert to USD using current ETH/USD exchange rate
-    eth_usd_price = etherscan.get_eth_price()
-    gas_price_usd = gas_price * eth_usd_price
-    gas_prices_usd.append(gas_price_usd)
+    # Convert to USD 
+        gas_price_usd = gas_price * eth_usd_price
+        gas_prices_usd.append(gas_price_usd)
+
+    print(f"Gas used: {gas_used}")
+    print(f"Gas limit: {gas_limit}")
+    print(f"Gas price: {gas_price}")
+    print(f"Gas price usd: {gas_price_usd}")
 
     print(f"Average gas prices in USD for last 6 hours: {gas_prices_usd}")
-
 
 # Create a bar chart of the average gas price in the last 6 hours grouped by hour
     fig, ax = plt.subplots()
@@ -114,8 +133,6 @@ while True:
     ax.set_title('Average gas price in the last 6 hours')
     hours = [datetime.now() - timedelta(hours=x) for x in range(5,-1,-1)]
     ax.set_xticks(range(1, 7))
-    ax.set_xticklabels([h.strftime('%-I%p') for h in hours][::2])
-
 
 #fig.savefig('chart.png')
 
