@@ -1,16 +1,8 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-import json
-import sys
+from mastodon import Mastodon
 import time
-import ethers
-from decimal import Decimal
 from datetime import datetime, timezone, timedelta
 from web3 import Web3
-from web3 import HTTPProvider
 import requests
-import matplotlib.pyplot as plt
 from etherscan import Etherscan
 from dotenv import load_dotenv
 import os
@@ -25,10 +17,21 @@ alchemy_api_key=os.getenv('ALCHEMY_KEY')
 etherscan_api_key = os.getenv('ETHERSCAN_API_KEY')
 ifttt=os.getenv('ifttt_key')
 
+
+
 # Connect to instances
 w3 = Web3(Web3.HTTPProvider(alchemy))
 etherscan = Etherscan(etherscan_api_key)
 ifttt_url = f'https://maker.ifttt.com/trigger/post_tweet/with/key/{ifttt}'
+
+mastodon = Mastodon(
+    access_token=os.getenv('mastodon_accesstoken'),
+    api_base_url='https://mastodon.social'
+)
+
+#send message every hour
+interval = 3600
+
 
 
 #ETH price, 24h change and Gas price
@@ -79,22 +82,33 @@ while True:
 
     print(tweet_text)
 
-# Define data payload for ifttt
-    payload = {'tweet_text': tweet_text}
-    print(payload)
 
-# Send HTTP POST request
-    response = requests.post(ifttt_url, data=json.dumps(payload), headers={'Content-Type': 'application/json'})
-    print(response)
+#Send out the tweet
 
-    if response.status_code == 200:
-        print('Tweet posted successfully via IFTTT!')
-    else:
-        print('Error posting tweet via IFTTT:', response.text)
+    while True:
+        try:
+        # Post to Mastodon
+            mastodon.toot(tweet_text)
 
-# stop script
+        # Post to Steemit
+            #c = Comment("", steem_instance=steem)
+            #c.post(text)
 
-    sys.exit(0)
+        # Post to IFTTT
+            payload = {'value1': tweet_text}
+            response = requests.post(ifttt_url, json=payload)
+
+            if response.status_code == 200:
+                print('Tweet posted successfully via IFTTT!')
+            else:
+                print('Error posting tweet via IFTTT:', response.text)
+
+        except Exception as e:
+        
+            print('Error posting text:', e)
+
+    # Wait for the interval before posting again
+        time.sleep(interval)
 
 
 
