@@ -1,17 +1,8 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-import json
-import sys
 from mastodon import Mastodon
 import time
-import ethers
-from decimal import Decimal
 from datetime import datetime, timezone, timedelta
 from web3 import Web3
-from web3 import HTTPProvider
 import requests
-import matplotlib.pyplot as plt
 from etherscan import Etherscan
 from dotenv import load_dotenv
 import os
@@ -38,7 +29,7 @@ mastodon = Mastodon(
     api_base_url='https://mastodon.social'
 )
 
-
+#send message every hour
 interval = 3600
 
 
