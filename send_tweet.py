@@ -1,7 +1,7 @@
 from mastodon import Mastodon
 import time
 from datetime import datetime, timezone, timedelta
-from web3 import Web3
+from web3 import HTTPProvider, Web3
 import requests
 from etherscan import Etherscan
 from dotenv import load_dotenv
@@ -31,8 +31,8 @@ mastodon = Mastodon(
 
 
 while True:
-        #send message every hour
-        interval = 60
+        #send message every amount of seconds
+        interval = 15*60
         try:
 #ETH price, 24h change and Gas price
 
@@ -67,11 +67,24 @@ while True:
 
             average_gas_price_usd = sum(average_gas_price_usd) / len(average_gas_price_usd)
 
+# Get current block number and difficulty
+            block = w3.eth.get_block('latest')
+            block_number = block.number
+            difficulty = block.difficulty
+
+# Calculate the block time in seconds
+            block_time = block.timestamp - w3.eth.get_block(block_number - 1).timestamp
+
+# Calculate estimated network hashrate
+            hash_rate = 2 ** 32 * difficulty // block_time / 1000000
+
+            print(f"Estimated network hashrate: {hash_rate:.2f} MH/s")
+
 
 #Send out the tweet
 
 
-            tweet_text = f"🔷 ETH price is ${eth_usd_price} ({eth_usd_24h_change:+.2f}% last 24h)\n🔥 Current Gas price: ${current_gas_price_usd:.2f} || Avg Gas Price last 24h: ${average_gas_price_usd:.2f}\n#Ethereum #Gas"
+            tweet_text = f"🛰️ Reporting Live from #Ethereum Mainnet Station\n\n🔷 #ETH price is ${eth_usd_price} ({eth_usd_24h_change:+.2f}% last 24h)\n🔥 Gas price: ${current_gas_price_usd:.2f} || Avg Gas Price last 24h: ${average_gas_price_usd:.2f}\n💻 Network Hash Rate: {hash_rate / 10**9:.2f} MH/s"
         # Post to Mastodon
             mastodon.toot(tweet_text)
 
@@ -80,23 +93,24 @@ while True:
             #c.post(text)
 
         # Post to IFTTT
-            payload = {'value1': tweet_text}
+            payload = {'tweet_text': tweet_text}
             response = requests.post(ifttt_url, json=payload)
 
             if response.status_code == 200:
-                print('Tweet posted successfully via IFTTT!')
+                current_time = datetime.now()
+                timestamp_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
+
+                print("Tweet posted successfully via IFTTT, Current timestamp: ", timestamp_str)
+                print(f'Interval completed. Next tweet in {interval} seconds')
+                print(tweet_text)
+
             else:
                 print('Error posting tweet via IFTTT:', response.text)
 
         except Exception as e:
             print('Error posting text:', e)        # Code to execute regardless of whether an exception was raised or not
-            print('Interval completed. Waiting for next interval...')
+            
     # Wait for the interval before posting again
 
         finally:
             time.sleep(interval)
-
-
-
-
-
