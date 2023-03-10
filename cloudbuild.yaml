@@ -1,0 +1,20 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'gcr.io/eth-gas-watch/send-tweet', '.' ]
+  timeout: '1600s'
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - 'functions'
+  - 'deploy'
+  - 'send-tweet'
+  - '--region'
+  - 'eu-west1'
+  - '--runtime'
+  - 'python310'
+  - '--entry-point'
+  - 'send_tweet'
+  - '--trigger-http'
+  - '--allow-unauthenticated'
+  timeout: '300s'
+
+timeout: '300s'

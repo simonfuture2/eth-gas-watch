@@ -1,5 +1,4 @@
 from mastodon import Mastodon
-import time
 from datetime import datetime, timezone, timedelta
 from web3 import Web3
 import requests
