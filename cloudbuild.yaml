@@ -17,7 +17,6 @@ steps:
   - 'send_tweet'
   - '--trigger-http'
   - '--allow-unauthenticated'
+  - '--log-http'
+  - 'gs://eth-gas-watch_cloudbuild/logs'
   timeout: '1000s'
-  logging:
-    - 'gs://eth-gas-watch_cloudbuild'
-timeout: '1000s'
