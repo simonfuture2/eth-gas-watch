@@ -1,3 +1,6 @@
+import sys
+sys.path.append('/path/to/mastodon/package')
+
 from mastodon import Mastodon
 from datetime import datetime, timezone, timedelta
 from web3 import Web3
