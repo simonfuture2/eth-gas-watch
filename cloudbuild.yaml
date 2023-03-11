@@ -2,10 +2,26 @@ logsBucket: 'eth-gas-watch_cloudbuild'
 
 steps:
 - name: 'gcr.io/cloud-builders/docker'
-  args: [ 'build', '-t', 'gcr.io/eth-gas-watch/send-tweet', '.' ]
-  timeout: '1000s'
+  args:
+  - 'build'
+  - '--target=dependencies'
+  - '-t'
+  - 'gcr.io/eth-gas-watch/send-tweet:dependencies'
+  - '.'
+  timeout: '120s'
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'gcr.io/eth-gas-watch/send-tweet']
+  args:
+  - 'build'
+  - '-t'
+  - 'gcr.io/eth-gas-watch/send-tweet:latest'
+  - '--cache-from=gcr.io/eth-gas-watch/send-tweet:dependencies'
+  - '.'
+  timeout: '120s'
+- name: 'gcr.io/cloud-builders/docker'
+  args:
+  - 'push'
+  - 'gcr.io/eth-gas-watch/send-tweet:latest'
+  timeout: '120s'
 - name: 'gcr.io/cloud-builders/gcloud'
   args:
   - 'functions'
@@ -21,4 +37,6 @@ steps:
   - '--allow-unauthenticated'
   - '--log-http'
   - 'gs://eth-gas-watch_cloudbuild/logs'
-  timeout: '1000s'
+  - '--source'
+  - 'gcr.io/eth-gas-watch/send-tweet:latest'
+  timeout: '120s'
