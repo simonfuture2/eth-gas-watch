@@ -18,6 +18,6 @@ steps:
   - '--trigger-http'
   - '--allow-unauthenticated'
   timeout: '1000s'
-  logsBucket: 'eth-gas-watch_cloudbuild'
+  logging:
+    - 'gs://eth-gas-watch_cloudbuild'
 timeout: '1000s'
-
