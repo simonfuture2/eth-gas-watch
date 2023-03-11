@@ -1,3 +1,5 @@
+logsBucket: 'eth-gas-watch_cloudbuild'
+
 steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: [ 'build', '-t', 'gcr.io/eth-gas-watch/send-tweet', '.' ]
