@@ -110,5 +110,6 @@ def send_tweet(mega_send):
             except Exception as e:
                 print('Error posting text:', e)        # Code to execute regardless of whether an exception was raised or not
 
-def main(mega_send):
-     send_tweet(mega_send)
+def main(request):
+    mega_send = request.args.get('mega_send', default='')
+    send_tweet(mega_send)
