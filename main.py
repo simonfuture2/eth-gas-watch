@@ -17,6 +17,8 @@ def send_tweet():
     alchemy_api_key=os.getenv('ALCHEMY_KEY')
     etherscan_api_key = os.getenv('ETHERSCAN_API_KEY')
     ifttt=os.getenv('ifttt_key')
+    google_function_source = os.getenv('GOOGLE_FUNCTION_SOURCE')
+
 
 
 
