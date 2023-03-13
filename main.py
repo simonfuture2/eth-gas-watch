@@ -1,20 +1,17 @@
 from datetime import datetime
-import time
 from web3 import Web3
 import telegram
 import requests
 from dotenv import load_dotenv
 import os
-
+import asyncio
 
 load_dotenv()
 
-
-bot = telegram.Bot(token='TELEGRAM_BOT_TOKEN')
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 channel_id = '@ethgaswatch'
 
 alchemy = os.getenv('ALCHEMY_API_KEY')
-
 w3 = Web3(Web3.HTTPProvider(alchemy))
 
 current_time_utc = datetime.utcnow()
@@ -46,7 +43,12 @@ tweet_text = f"🛰️ Reporting Live from #Ethereum Mainnet Station\n\n🔷 #ET
 
 print(tweet_text)
 
-bot.send_message(chat_id=channel_id, text=tweet_text)
 
+async def send_message_async(channel_id, tweet_text):
+    bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
+    await bot.send_message(chat_id=channel_id, text=tweet_text)
+    
+
+asyncio.run(send_message_async(channel_id, tweet_text))
                 
         
