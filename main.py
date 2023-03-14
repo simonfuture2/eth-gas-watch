@@ -51,5 +51,6 @@ async def send_message_async(channel_id, tweet_text):
     
 
 asyncio.run(send_message_async(channel_id, tweet_text))
+time.sleep(3600)
                 
         
