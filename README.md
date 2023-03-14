@@ -1,4 +1,6 @@
-[![Python app](https://github.com/Gridddd/eth-gas-watch/actions/workflows/python-app.yml/badge.svg?branch=main)](https://github.com/Gridddd/eth-gas-watch/actions/workflows/python-app.yml)
+[![Python app](https://github.com/Gridddd/eth-gas-watch/actions/workflows/python-app.yml/badge.svg?branch=main)](https://github.com/Gridddd/eth-gas-watch/actions/workflows/python-app.yml) ![Open issues](https://img.shields.io/github/issues-raw/Gridddd/eth-gas-watch?color=red&label=Open%20Issues)
+
+
 # Eth Gas Watch
 
 Eth Gas Watch is an automated tool that sends a tweet or message every hour with relevant real-time data about the Ethereum Blockchain. This information can be useful for anyone who interacts with the Ethereum Blockchain and wants to stay informed about gas prices and other metrics.
