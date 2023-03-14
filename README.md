@@ -5,13 +5,12 @@ Eth Gas Watch is an automated tool that sends a tweet or message every hour with
 ## Contents
 - Getting Started
 - Installation
-- Contributing
 - License
 
 ## Getting Started
 Before using Eth Gas Watch, you will need to make sure you have the following tools and API keys:
+
 - Alchemy API key
-- Etherscan API key
 
 ## Installation
 
@@ -32,9 +31,6 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 5. Set up your API keys as environment variables in a `.env` file.
-
-## Contributing
-Thank you for checking out Eth Gas Watch! We welcome contributions from the community. If you find a bug or have an idea for a new feature, please create an issue or submit a pull request. Together, we can make Eth Gas Watch even better.
 
 ## License
 Eth Gas Watch is licensed under the MIT License.
