@@ -1,9 +1,15 @@
-[![Python app](https://github.com/Gridddd/eth-gas-watch/actions/workflows/python-app.yml/badge.svg?branch=main)](https://github.com/Gridddd/eth-gas-watch/actions/workflows/python-app.yml) ![Open issues](https://img.shields.io/github/issues-raw/Gridddd/eth-gas-watch?color=red&label=Open%20Issues)
+[![Build](https://github.com/Gridddd/eth-gas-watch/actions/workflows/python-app.yml/badge.svg?branch=main)](https://github.com/Gridddd/eth-gas-watch/actions/workflows/python-app.yml) ![Open issues](https://img.shields.io/github/issues-raw/Gridddd/eth-gas-watch?color=red&label=Open%20Issues) [![Donate](https://img.shields.io/static/v1?label=Donate&message=Ethereum&color=3C3C3D&logo=ethereum)](https://etherscan.io/address/0x5F4a5E69248f6580c438B31AEdC648e518bD9828)
+
+
 
 
 # Eth Gas Watch
 
-Eth Gas Watch is an automated tool that sends a tweet or message every hour with relevant real-time data about the Ethereum Blockchain. This information can be useful for anyone who interacts with the Ethereum Blockchain and wants to stay informed about gas prices and other metrics.
+Eth Gas Watch is an automated tool that sends a tweet or message every hour with relevant real-time data about the Ethereum Blockchain. This information can be useful for anyone who interacts with the Ethereum Blockchain and wants to stay informed about gas prices and other metrics.\
+\
+You can check the current account on Twitter [![Twitter](https://img.shields.io/twitter/follow/ethgaswatch?style=social)](https://twitter.com/ethgaswatch) and Telegram [![Telegram](https://img.shields.io/badge/Join-Telegram-blue.svg?logo=telegram)](https://t.me/ethgaswatch)
+
+
 
 ## Contents
 - Getting Started
@@ -11,9 +17,16 @@ Eth Gas Watch is an automated tool that sends a tweet or message every hour with
 - License
 
 ## Getting Started
-Before using Eth Gas Watch, you will need to make sure you have the following tools and API keys:
+Before using Eth Gas Watch, you will need to make sure you have the following API keys:
 
-- Alchemy API key
+- [Alchemy API key](https://www.alchemy.com/)
+
+
+Alchemy is the provider of choice, although others are encouraged to be used if there are more valuable endpoints.\
+\
+The Telegram bot API is not needed and you can avoid having to set one up, just comment or delete those lines.\
+\
+The main file is `main.py` and the Python version is `3.10.6`.
 
 ## Installation
 
