@@ -2,7 +2,7 @@ from datetime import datetime, time, timedelta
 from pytz import timezone
 from web3 import Web3
 import telegram
-import requests, json
+import requests
 from dotenv import load_dotenv
 import os
 import asyncio
