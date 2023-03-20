@@ -19,10 +19,11 @@ You can check the current account on Twitter [![Twitter](https://img.shields.io/
 ## Getting Started
 Before using Eth Gas Watch, you will need to make sure you have the following API keys:
 
-- [Alchemy API key](https://www.alchemy.com/)
+- [Alchemy](https://docs.alchemy.com/reference/api-overview)
+- [Etherscan](https://docs.etherscan.io/)
 
 
-Alchemy is the provider of choice, although others are encouraged to be used if there are more valuable endpoints.\
+Alchemy and Etherscan are the providers of choice, although others are encouraged to be used if you find more suitable endpoints.\
 \
 The Telegram bot API is not needed and you can avoid having to set one up, just comment or delete those lines.\
 \
