@@ -20,12 +20,11 @@ etherscan = os.getenv("ETHERSCAN_API_KEY")
 w3 = Web3(Web3.HTTPProvider(alchemy))
 pt = timezone('US/Pacific')
 
+bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
 
 
 async def send_message_async(channel_id, tweet_text):
-    bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
     await bot.send_message(chat_id=channel_id, text=tweet_text)
-
 
 
 async def send_four_hourly_messages():
@@ -33,17 +32,22 @@ async def send_four_hourly_messages():
         utc_time = datetime.utcnow()
         formatted_time = utc_time.strftime('%m-%d-%Y %I:%M %p')
 
-        market_cap = json.loads(requests.get('https://api.coingecko.com/api/v3/coins/ethereum').text)['market_data']['market_cap']['usd']
+        with requests.Session() as session:
+            market_cap_request = session.get('https://api.coingecko.com/api/v3/coins/ethereum')
+            market_cap_data = market_cap_request.json()
+            market_cap = market_cap_data['market_data']['market_cap']['usd']
 
-        btc_dominance = json.loads(requests.get('https://api.coingecko.com/api/v3/global').text)['data']['market_cap_percentage']['btc']
-        eth_dominance = json.loads(requests.get('https://api.coingecko.com/api/v3/global').text)['data']['market_cap_percentage']['eth']
+            global_data_request = session.get('https://api.coingecko.com/api/v3/global')
+            global_data = global_data_request.json()
+            btc_dominance = global_data['data']['market_cap_percentage']['btc']
+            eth_dominance = global_data['data']['market_cap_percentage']['eth']
+
+            eth_data_request = session.get('https://api.coingecko.com/api/v3/coins/ethereum?market_data=true')
+            eth_data = eth_data_request.json()
+            eth_usd_price = eth_data['market_data']['current_price']['usd']
+            eth_usd_1h_change = eth_data['market_data']['price_change_percentage_1h_in_currency']['usd']
+
         diff = btc_dominance - eth_dominance
-
-        response = requests.get('https://api.coingecko.com/api/v3/coins/ethereum?market_data=true')
-        data=response.json()
-        eth_usd_price = data['market_data']['current_price']['usd']
-        eth_usd_1h_change = data['market_data']['price_change_percentage_1h_in_currency']['usd']
-
 
         current_gas_price_gwei = w3.eth.gas_price / 10**9
         current_gas_price_usd = current_gas_price_gwei * 10**-9 * 21000 * eth_usd_price
@@ -54,7 +58,6 @@ async def send_four_hourly_messages():
 
         await send_message_async(channel_id, tweet_text)
         await asyncio.sleep(14400)
-
 
 
 def ordinal(n):
@@ -78,8 +81,11 @@ async def fear_greed():
         await asyncio.sleep(time_diff.total_seconds())
         
         url = "https://api.alternative.me/fng/?limit=1&format=json"
-        response = requests.get(url)
-        data = response.json()
+
+        with requests.Session() as session:
+            response = session.get(url)
+            data = response.json()
+
         fear_greed_value = data["data"][0]["value"]
         sentiment = data["data"][0]["value_classification"]
         date = datetime.utcfromtimestamp(int(data["data"][0]["timestamp"])).strftime('%B %d')
@@ -110,14 +116,14 @@ async def eth_supply():
 
         await asyncio.sleep(time_diff.total_seconds())
 
-        # Fetch the current Ether supply, ETH2 staking rewards, and EIP1559 burnt fees
         url = f"https://api.etherscan.io/api?module=stats&action=ethsupply2&apikey={etherscan}"
-        response = requests.get(url)
-        result = response.json()["result"]
+        with requests.Session() as session:
+            response = session.get(url)
+            result = response.json()["result"]
+
         eth_supply = int(result["EthSupply"], 16) / 10**18
         staking_rewards = int(result["Eth2Staking"], 16) / 10**18
         burnt_fees = int(result["BurntFees"], 16) / 10**18
-
         us_time = now.strftime('%I:%M %p %Z')
 
         supply = f"{us_time} $ETH status update\n\nCurrent Ethereum supply: {eth_supply} ETH\nETH2 staking rewards: {staking_rewards} ETH\nTotal ETH burnt since PoS transition: {burnt_fees} ETH"
