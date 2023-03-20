@@ -1,4 +1,5 @@
 from datetime import datetime, time, timedelta
+from pytz import timezone
 from web3 import Web3
 import telegram
 import requests, json
@@ -6,21 +7,27 @@ from dotenv import load_dotenv
 import os
 import asyncio
 
-load_dotenv()
 
+
+load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 channel_id = '@ethgaswatch'
 
-
 alchemy = os.getenv('ALCHEMY_API_KEY')
+etherscan = os.getenv("ETHERSCAN_API_KEY")
+
 w3 = Web3(Web3.HTTPProvider(alchemy))
+pt = timezone('US/Pacific')
+
+
 
 async def send_message_async(channel_id, tweet_text):
     bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
     await bot.send_message(chat_id=channel_id, text=tweet_text)
 
-#Send status update every 4h
+
+
 async def send_four_hourly_messages():
     while True:
         utc_time = datetime.utcnow()
@@ -49,10 +56,13 @@ async def send_four_hourly_messages():
         await asyncio.sleep(14400)
 
 
+
 def ordinal(n):
     return str(n) + ('th' if 4 <= n % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th'))
 
-async def send_daily_message():
+
+
+async def fear_greed():
     while True:
         now = datetime.utcnow()
         scheduled_time = time(hour=9, minute=0, second=0, microsecond=0)
@@ -72,8 +82,8 @@ async def send_daily_message():
         data = response.json()
         fear_greed_value = data["data"][0]["value"]
         sentiment = data["data"][0]["value_classification"]
-        date = datetime.utcfromtimestamp(int(data["data"][0]["timestamp"])).strftime('%B ') + ordinal(int(data["data"][0]["timestamp"][8:10]))
-        
+        date = datetime.utcfromtimestamp(int(data["data"][0]["timestamp"])).strftime('%B %d')
+
         message = f"GM #CryptoTwitter\n\n{date} Crypto Fear and Greed Index stands at {fear_greed_value}/100\n\nSentiment: {sentiment}"
         
         print(message)
@@ -82,10 +92,48 @@ async def send_daily_message():
 
 
 
+
+async def eth_supply():
+    while True:
+        now = datetime.utcnow().replace(tzinfo=timezone('UTC')).astimezone(pt)
+
+        scheduled_time = time(hour=9, minute=0)
+
+        next_schedule_time = datetime.combine(now.date(), scheduled_time)
+
+        if now.time() > scheduled_time:
+            next_schedule_time += timedelta(days=1)
+
+        now_datetime = datetime.combine(now.date(), now.time())
+
+        time_diff = next_schedule_time - now_datetime
+
+        await asyncio.sleep(time_diff.total_seconds())
+
+        # Fetch the current Ether supply, ETH2 staking rewards, and EIP1559 burnt fees
+        url = f"https://api.etherscan.io/api?module=stats&action=ethsupply2&apikey={etherscan}"
+        response = requests.get(url)
+        result = response.json()["result"]
+        eth_supply = int(result["EthSupply"], 16) / 10**18
+        staking_rewards = int(result["Eth2Staking"], 16) / 10**18
+        burnt_fees = int(result["BurntFees"], 16) / 10**18
+
+        us_time = now.strftime('%I:%M %p %Z')
+
+        supply = f"{us_time} $ETH status update\n\nCurrent Ethereum supply: {eth_supply} ETH\nETH2 staking rewards: {staking_rewards} ETH\nTotal ETH burnt since PoS transition: {burnt_fees} ETH"
+        
+        print(supply)
+
+        await send_message_async(channel_id,supply)
+
+
+
+
 async def main():
     tasks = [
         asyncio.create_task(send_four_hourly_messages()),
-        asyncio.create_task(send_daily_message()),
+        asyncio.create_task(fear_greed()),
+        asyncio.create_task(eth_supply())
     ]
     await asyncio.gather(*tasks)
 
