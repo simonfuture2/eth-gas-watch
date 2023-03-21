@@ -131,9 +131,12 @@ async def eth_supply():
         await asyncio.sleep(time_diff.total_seconds())
 
 
+tasks = asyncio.gather(
+    send_four_hourly_messages(),
+    fear_greed(),
+    eth_supply()
+)
 
+asyncio.run(tasks)
 
-asyncio.run(send_four_hourly_messages())
-asyncio.run(fear_greed())
-asyncio.run(eth_supply())
 
