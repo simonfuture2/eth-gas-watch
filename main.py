@@ -78,8 +78,6 @@ async def fear_greed():
 
         time_diff = next_schedule_datetime - now_datetime
         
-        await asyncio.sleep(time_diff.total_seconds())
-        
         url = "https://api.alternative.me/fng/?limit=1&format=json"
 
         with requests.Session() as session:
@@ -95,6 +93,7 @@ async def fear_greed():
         print(message)
 
         await send_message_async(channel_id, message)
+        await asyncio.sleep(time_diff.total_seconds())
 
 
 
@@ -114,8 +113,6 @@ async def eth_supply():
 
         time_diff = next_schedule_time - now_datetime
 
-        await asyncio.sleep(time_diff.total_seconds())
-
         url = f"https://api.etherscan.io/api?module=stats&action=ethsupply2&apikey={etherscan}"
         with requests.Session() as session:
             response = session.get(url)
@@ -131,16 +128,12 @@ async def eth_supply():
         print(supply)
 
         await send_message_async(channel_id,supply)
+        await asyncio.sleep(time_diff.total_seconds())
 
 
 
 
-async def main():
-    tasks = [
-        asyncio.create_task(send_four_hourly_messages()),
-        asyncio.create_task(fear_greed()),
-        asyncio.create_task(eth_supply())
-    ]
-    await asyncio.gather(*tasks)
+asyncio.run(send_four_hourly_messages())
+asyncio.run(fear_greed())
+asyncio.run(eth_supply())
 
-asyncio.run(main())
