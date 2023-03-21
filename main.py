@@ -118,25 +118,20 @@ async def eth_supply():
             response = session.get(url)
             result = response.json()["result"]
 
-        eth_supply = int(result["EthSupply"], 16) / 10**18
-        staking_rewards = int(result["Eth2Staking"], 16) / 10**18
-        burnt_fees = int(result["BurntFees"], 16) / 10**18
+        eth_supply = int(result["EthSupply"]) / 10**18
+        staking_rewards = int(result["Eth2Staking"]) / 10**18
+        burnt_fees = int(result["BurntFees"]) / 10**18
         us_time = now.strftime('%I:%M %p %Z')
 
-        supply = f"{us_time} $ETH status update\n\nCurrent Ethereum supply: {eth_supply} ETH\nETH2 staking rewards: {staking_rewards} ETH\nTotal ETH burnt since PoS transition: {burnt_fees} ETH"
+        supply = f"{us_time} $ETH status update\n\nCurrent Ethereum supply: {eth_supply:,.2f} ETH\nETH2 staking rewards: {staking_rewards:,.2f} ETH\nTotal ETH burnt since PoS transition: {burnt_fees:,.2f} ETH"
         
         print(supply)
 
         await send_message_async(channel_id,supply)
         await asyncio.sleep(time_diff.total_seconds())
 
+async def main():
+    await asyncio.gather(send_four_hourly_messages(), fear_greed(), eth_supply())
 
-tasks = asyncio.gather(
-    send_four_hourly_messages(),
-    fear_greed(),
-    eth_supply()
-)
-
-asyncio.run(tasks)
-
+asyncio.run(main())
 
