@@ -1,4 +1,5 @@
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta
+import time
 from pytz import timezone
 from web3 import Web3
 import telegram
@@ -21,10 +22,6 @@ w3 = Web3(Web3.HTTPProvider(alchemy))
 pt = timezone('US/Pacific')
 
 bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
-
-
-async def send_message_async(channel_id, tweet_text):
-    await bot.send_message(chat_id=channel_id, text=tweet_text)
 
 
 async def send_four_hourly_messages():
@@ -56,8 +53,11 @@ async def send_four_hourly_messages():
 
         print(tweet_text)
 
-        await send_message_async(channel_id, tweet_text)
+        await bot.send_message(chat_id=channel_id, text=tweet_text)
+
         await asyncio.sleep(14400)
+
+
 
 
 def ordinal(n):
@@ -92,7 +92,9 @@ async def fear_greed():
         
         print(message)
 
-        await send_message_async(channel_id, message)
+        await bot.send_message(chat_id=channel_id, text=message)
+
+
         await asyncio.sleep(time_diff.total_seconds())
 
 
@@ -127,11 +129,16 @@ async def eth_supply():
         
         print(supply)
 
-        await send_message_async(channel_id,supply)
+        await bot.send_message(chat_id=channel_id, text=supply)
+
         await asyncio.sleep(time_diff.total_seconds())
 
+
 async def main():
-    await asyncio.gather(send_four_hourly_messages(), fear_greed(), eth_supply())
+    while True:
+        await send_four_hourly_messages()
+        await fear_greed()
+        await eth_supply()
 
-asyncio.run(main())
-
+if __name__ == '__main__':
+    asyncio.run(main())
