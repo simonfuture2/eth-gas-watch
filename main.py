@@ -26,36 +26,38 @@ bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
 
 async def send_four_hourly_messages():
     while True:
-        utc_time = datetime.utcnow()
-        formatted_time = utc_time.strftime('%m-%d-%Y %I:%M %p')
+        now = datetime.now()
+        if now.hour % 4 == 0 and now.minute == 0:
+            utc_time = now.strftime('%m-%d-%Y %I:%M %p')
 
-        with requests.Session() as session:
-            market_cap_request = session.get('https://api.coingecko.com/api/v3/coins/ethereum')
-            market_cap_data = market_cap_request.json()
-            market_cap = market_cap_data['market_data']['market_cap']['usd']
+            with requests.Session() as session:
+                market_cap_request = session.get('https://api.coingecko.com/api/v3/coins/ethereum')
+                market_cap_data = market_cap_request.json()
+                market_cap = market_cap_data['market_data']['market_cap']['usd']
 
-            global_data_request = session.get('https://api.coingecko.com/api/v3/global')
-            global_data = global_data_request.json()
-            btc_dominance = global_data['data']['market_cap_percentage']['btc']
-            eth_dominance = global_data['data']['market_cap_percentage']['eth']
+                global_data_request = session.get('https://api.coingecko.com/api/v3/global')
+                global_data = global_data_request.json()
+                btc_dominance = global_data['data']['market_cap_percentage']['btc']
+                eth_dominance = global_data['data']['market_cap_percentage']['eth']
 
-            eth_data_request = session.get('https://api.coingecko.com/api/v3/coins/ethereum?market_data=true')
-            eth_data = eth_data_request.json()
-            eth_usd_price = eth_data['market_data']['current_price']['usd']
-            eth_usd_1h_change = eth_data['market_data']['price_change_percentage_1h_in_currency']['usd']
+                eth_data_request = session.get('https://api.coingecko.com/api/v3/coins/ethereum?market_data=true')
+                eth_data = eth_data_request.json()
+                eth_usd_price = eth_data['market_data']['current_price']['usd']
+                eth_usd_1h_change = eth_data['market_data']['price_change_percentage_1h_in_currency']['usd']
 
-        diff = btc_dominance - eth_dominance
+            diff = btc_dominance - eth_dominance
 
-        current_gas_price_gwei = w3.eth.gas_price / 10**9
-        current_gas_price_usd = current_gas_price_gwei * 10**-9 * 21000 * eth_usd_price
+            current_gas_price_gwei = w3.eth.gas_price / 10**9
+            current_gas_price_usd = current_gas_price_gwei * 10**-9 * 21000 * eth_usd_price
 
-        tweet_text = f"{formatted_time} UTC Live from #Ethereum Mainnet\n\n• $ETH price is ${eth_usd_price} ({eth_usd_1h_change:+.2f}% 1h)\n• Market Cap: ${market_cap:,}\n• Dominance: {eth_dominance:.2f}% | {diff:.2f} behind $BTC\n• Gas price: {current_gas_price_gwei:.2f} GWEI = ${current_gas_price_usd:.2f}\n\n#DeFi #NFT #Crypto"
+            tweet_text = f"{utc_time} UTC Live from #Ethereum Mainnet\n\n• $ETH price is ${eth_usd_price} ({eth_usd_1h_change:+.2f}% 1h)\n• Market Cap: ${market_cap:,}\n• Dominance: {eth_dominance:.2f}% | {diff:.2f} behind $BTC\n• Gas price: {current_gas_price_gwei:.2f} GWEI = ${current_gas_price_usd:.2f}\n\n#DeFi #NFT #Crypto"
 
-        print(tweet_text)
+            print(tweet_text)
 
-        await bot.send_message(chat_id=channel_id, text=tweet_text)
+            bot.send_message(chat_id=channel_id, text=tweet_text)
 
-        await asyncio.sleep(14400)
+        await asyncio.sleep(60)
+
 
 
 
@@ -64,20 +66,8 @@ def ordinal(n):
     return str(n) + ('th' if 4 <= n % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th'))
 
 
-
-async def fear_greed():
-    while True:
-        now = datetime.utcnow()
-        scheduled_time = time(hour=9, minute=0, second=0, microsecond=0)
-        
-        now_datetime = datetime.combine(now.date(), now.time())
-        next_schedule_datetime = datetime.combine(now.date(), scheduled_time)
-
-        if now.time() > scheduled_time:
-            next_schedule_datetime += timedelta(days=1)
-
-        time_diff = next_schedule_datetime - now_datetime
-        
+def fear_greed():
+    def job():
         url = "https://api.alternative.me/fng/?limit=1&format=json"
 
         with requests.Session() as session:
@@ -92,28 +82,22 @@ async def fear_greed():
         
         print(message)
 
-        await bot.send_message(chat_id=channel_id, text=message)
+        bot.send_message(chat_id=channel_id, text=message)
 
-
-        await asyncio.sleep(time_diff.total_seconds())
-
-
-
-
-async def eth_supply():
     while True:
+        now = datetime.now().strftime('%H:%M')
+        if now == '08:00':
+            job()
+            # wait until tomorrow
+            time.sleep(86400 - time.time() % 86400)
+        else:
+            # wait 1 minute before checking again
+            time.sleep(60)
+
+
+def eth_supply():
+    def job():
         now = datetime.utcnow().replace(tzinfo=timezone('UTC')).astimezone(pt)
-
-        scheduled_time = time(hour=9, minute=0)
-
-        next_schedule_time = datetime.combine(now.date(), scheduled_time)
-
-        if now.time() > scheduled_time:
-            next_schedule_time += timedelta(days=1)
-
-        now_datetime = datetime.combine(now.date(), now.time())
-
-        time_diff = next_schedule_time - now_datetime
 
         url = f"https://api.etherscan.io/api?module=stats&action=ethsupply2&apikey={etherscan}"
         with requests.Session() as session:
@@ -129,16 +113,21 @@ async def eth_supply():
         
         print(supply)
 
-        await bot.send_message(chat_id=channel_id, text=supply)
+        bot.send_message(chat_id=channel_id, text=supply)
 
-        await asyncio.sleep(time_diff.total_seconds())
+    while True:
+        now = datetime.now().strftime('%H:%M')
+        if now == '09:00':
+            job()
+            # wait until tomorrow
+            time.sleep(86400 - time.time() % 86400)
+        else:
+            # wait 1 minute before checking again
+            time.sleep(60)
 
 
 async def main():
-    while True:
-        await send_four_hourly_messages()
-        await fear_greed()
-        await eth_supply()
+    await asyncio.gather(send_four_hourly_messages(), fear_greed(), eth_supply())
 
-if __name__ == '__main__':
-    asyncio.run(main())
+
+asyncio.run(main())
