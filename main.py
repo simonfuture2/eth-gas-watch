@@ -1,14 +1,12 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import time
 from pytz import timezone
 from web3 import Web3
-import telegram
 import requests
 from dotenv import load_dotenv
 import os
 import asyncio
-
-
+import aiohttp
 
 load_dotenv()
 
@@ -21,58 +19,54 @@ etherscan = os.getenv("ETHERSCAN_API_KEY")
 w3 = Web3(Web3.HTTPProvider(alchemy))
 pt = timezone('US/Pacific')
 
-bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
 
+async def send_telegram_message(chat_id, text):
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    data = {
+        "chat_id": chat_id,
+        "text": text
+    }
+    async with aiohttp.ClientSession() as session:
+        await session.post(url, data=data)
+
+
+async def fetch_eth_data():
+    url = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_market_cap=true&include_24hr_change=true"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            data = await resp.json()
+    return data
 
 async def send_four_hourly_messages():
     while True:
         now = datetime.now()
-        if now.hour % 4 == 0 and now.minute == 0:
-            utc_time = now.strftime('%m-%d-%Y %I:%M %p')
+        utc_time = now.strftime('%m-%d-%Y %I:%M %p')
 
-            with requests.Session() as session:
-                market_cap_request = session.get('https://api.coingecko.com/api/v3/coins/ethereum')
-                market_cap_data = market_cap_request.json()
-                market_cap = market_cap_data['market_data']['market_cap']['usd']
+        eth_data = await fetch_eth_data()
 
-                global_data_request = session.get('https://api.coingecko.com/api/v3/global')
-                global_data = global_data_request.json()
-                btc_dominance = global_data['data']['market_cap_percentage']['btc']
-                eth_dominance = global_data['data']['market_cap_percentage']['eth']
+        market_cap = eth_data['ethereum']['usd_market_cap']
+        eth_usd_price = eth_data['ethereum']['usd']
 
-                eth_data_request = session.get('https://api.coingecko.com/api/v3/coins/ethereum?market_data=true')
-                eth_data = eth_data_request.json()
-                eth_usd_price = eth_data['market_data']['current_price']['usd']
-                eth_usd_1h_change = eth_data['market_data']['price_change_percentage_1h_in_currency']['usd']
+        current_gas_price_gwei = w3.eth.gas_price / 10**9
+        current_gas_price_usd = current_gas_price_gwei * 10**-9 * 21000 * eth_usd_price
 
-            diff = btc_dominance - eth_dominance
+        tweet_text = f"{utc_time} UTC Live from #Ethereum Mainnet\n\n$ETH price is ${eth_usd_price}\nMarket Cap: ${market_cap:,}\nGas price: {current_gas_price_gwei:.2f} GWEI = ${current_gas_price_usd:.2f}\n\n#DeFi #NFT #Crypto"
 
-            current_gas_price_gwei = w3.eth.gas_price / 10**9
-            current_gas_price_usd = current_gas_price_gwei * 10**-9 * 21000 * eth_usd_price
+        print(tweet_text)
 
-            tweet_text = f"{utc_time} UTC Live from #Ethereum Mainnet\n\n• $ETH price is ${eth_usd_price} ({eth_usd_1h_change:+.2f}% 1h)\n• Market Cap: ${market_cap:,}\n• Dominance: {eth_dominance:.2f}% | {diff:.2f} behind $BTC\n• Gas price: {current_gas_price_gwei:.2f} GWEI = ${current_gas_price_usd:.2f}\n\n#DeFi #NFT #Crypto"
+        await send_telegram_message(channel_id, tweet_text)
 
-            print(tweet_text)
-
-            bot.send_message(chat_id=channel_id, text=tweet_text)
-
-        await asyncio.sleep(60)
+        await asyncio.sleep(14400)
 
 
 
-
-
-def ordinal(n):
-    return str(n) + ('th' if 4 <= n % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th'))
-
-
-def fear_greed():
-    def job():
+async def fear_greed():
+    async def job():
         url = "https://api.alternative.me/fng/?limit=1&format=json"
 
-        with requests.Session() as session:
-            response = session.get(url)
-            data = response.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                data = await resp.json()
 
         fear_greed_value = data["data"][0]["value"]
         sentiment = data["data"][0]["value_classification"]
@@ -82,27 +76,27 @@ def fear_greed():
         
         print(message)
 
-        bot.send_message(chat_id=channel_id, text=message)
+        await send_telegram_message(channel_id, message)
 
     while True:
         now = datetime.now().strftime('%H:%M')
         if now == '08:00':
-            job()
+            await job()
             # wait until tomorrow
-            time.sleep(86400 - time.time() % 86400)
+            await asyncio.sleep(86400 - time.time() % 86400)
         else:
             # wait 1 minute before checking again
-            time.sleep(60)
+            await asyncio.sleep(60)
 
 
-def eth_supply():
-    def job():
+async def eth_supply():
+    async def job():
         now = datetime.utcnow().replace(tzinfo=timezone('UTC')).astimezone(pt)
 
         url = f"https://api.etherscan.io/api?module=stats&action=ethsupply2&apikey={etherscan}"
-        with requests.Session() as session:
-            response = session.get(url)
-            result = response.json()["result"]
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                result = await resp.json()["result"]
 
         eth_supply = int(result["EthSupply"]) / 10**18
         staking_rewards = int(result["Eth2Staking"]) / 10**18
@@ -113,17 +107,17 @@ def eth_supply():
         
         print(supply)
 
-        bot.send_message(chat_id=channel_id, text=supply)
+        await send_telegram_message(channel_id, supply)
 
     while True:
         now = datetime.now().strftime('%H:%M')
         if now == '09:00':
-            job()
+            await job()
             # wait until tomorrow
-            time.sleep(86400 - time.time() % 86400)
+            await asyncio.sleep(86400 - time.time() % 86400)
         else:
             # wait 1 minute before checking again
-            time.sleep(60)
+            await asyncio.sleep(60)
 
 
 async def main():
@@ -131,3 +125,4 @@ async def main():
 
 
 asyncio.run(main())
+
