@@ -2,7 +2,6 @@ from datetime import datetime
 import time
 from pytz import timezone
 from web3 import Web3
-import requests
 from dotenv import load_dotenv
 import os
 import asyncio
@@ -14,7 +13,7 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 channel_id = '@ethgaswatch'
 
 alchemy = os.getenv('ALCHEMY_API_KEY')
-etherscan = os.getenv("ETHERSCAN_API_KEY")
+etherscan = os.getenv('ETHERSCAN_API_KEY')
 
 w3 = Web3(Web3.HTTPProvider(alchemy))
 pt = timezone('US/Pacific')
