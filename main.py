@@ -33,13 +33,13 @@ async def fetch_eth_data():
     url = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_market_cap=true&include_24hr_change=true"
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
-            if resp.content_type == 'application/json':
+            if resp.headers.get('Content-Type') == 'application/json':
                 data = await resp.json()
                 return data
             else:
-                print(f"Unexpected content type: {resp.content_type}")
-                # Handle the error
+                print(f"Error: Unexpected content type '{resp.headers.get('Content-Type')}' when fetching Ethereum data.")
                 return {}
+
 
 
 async def send_four_hourly_messages():
