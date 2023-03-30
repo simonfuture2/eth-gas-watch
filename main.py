@@ -41,7 +41,6 @@ async def fetch_eth_data():
                 return {}
 
 
-
 async def send_four_hourly_messages():
     while True:
         now = datetime.now()
@@ -49,19 +48,24 @@ async def send_four_hourly_messages():
 
         eth_data = await fetch_eth_data()
 
-        market_cap = eth_data['ethereum']['usd_market_cap']
-        eth_usd_price = eth_data['ethereum']['usd']
+        try:
+            market_cap = eth_data['ethereum']['usd_market_cap']
+            eth_usd_price = eth_data['ethereum']['usd']
 
-        current_gas_price_gwei = w3.eth.gas_price / 10**9
-        current_gas_price_usd = current_gas_price_gwei * 10**-9 * 21000 * eth_usd_price
+            current_gas_price_gwei = w3.eth.gas_price / 10**9
+            current_gas_price_usd = current_gas_price_gwei * 10**-9 * 21000 * eth_usd_price
 
-        tweet_text = f"{utc_time} UTC Live from #Ethereum Mainnet\n\n$ETH price is ${eth_usd_price}\nMarket Cap: ${market_cap:,}\nGas price: {current_gas_price_gwei:.2f} GWEI = ${current_gas_price_usd:.2f}\n\n#DeFi #NFT #Crypto"
+            tweet_text = f"{utc_time} UTC Live from #Ethereum Mainnet\n\n$ETH price is ${eth_usd_price}\nMarket Cap: ${market_cap:,}\nGas price: {current_gas_price_gwei:.2f} GWEI = ${current_gas_price_usd:.2f}\n\n#DeFi #NFT #Crypto"
 
-        print(tweet_text)
+            print(tweet_text)
 
-        await send_telegram_message(channel_id, tweet_text)
+            await send_telegram_message(channel_id, tweet_text)
+
+        except KeyError:
+            print("Error: 'ethereum' key not found in the response data.")
 
         await asyncio.sleep(14400)
+
 
 
 
